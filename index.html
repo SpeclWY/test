@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理学术语测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Arial', sans-serif; }
+        body { background: linear-gradient(135deg, #2c3e50, #4ca1af); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 750px; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 2.2em; margin-bottom: 5px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .stats { background: #f8f9fa; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; font-weight: bold; font-size: 1.2em; }
+        .score-box, .q-counter { background: #3498db; color: white; padding: 8px 20px; border-radius: 30px; }
+        .main { padding: 30px 25px; }
+        .question-text { font-size: 1.3em; font-weight: 600; color: #2c3e50; margin-bottom: 25px; line-height: 1.5; background: #f1f2f6; padding: 20px; border-radius: 12px; border-left: 5px solid #3498db; }
+        .options-area { margin: 20px 0; }
+        .option-btn { display: block; width: 100%; padding: 15px 20px; margin: 10px 0; background: #f1f2f6; border: 2px solid transparent; border-radius: 12px; font-size: 1.1em; text-align: left; cursor: pointer; transition: 0.2s; }
+        .option-btn:hover { background: #e2e6ea; transform: translateX(5px); }
+        .option-btn.selected { border-color: #3498db; background: #e8f4fd; }
+        .option-btn.correct { border-color: #27ae60; background: #d5f4e6; }
+        .option-btn.wrong { border-color: #e74c3c; background: #fadbd8; }
+        .fill-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; background: #f1f2f6; padding: 25px; border-radius: 12px; }
+        .letter-input { width: 50px; height: 50px; text-align: center; font-size: 1.5em; font-weight: bold; border: 3px solid #bdc3c7; border-radius: 8px; text-transform: uppercase; }
+        .letter-input:focus { border-color: #3498db; outline: none; }
+        .fixed-letter { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; background: #3498db; color: white; border-radius: 8px; }
+        .feedback { margin: 25px 0; padding: 20px; border-radius: 12px; background: #f8f9fa; border-left: 5px solid #3498db; display: none; }
+        .feedback.show { display: block; animation: fadeIn 0.3s; }
+        .feedback.correct-feedback { border-left-color: #27ae60; background: #e8f8f5; }
+        .feedback.wrong-feedback { border-left-color: #e74c3c; background: #fdedec; }
+        .feedback-title { font-weight: bold; font-size: 1.2em; margin-bottom: 5px; }
+        .btn { padding: 15px 30px; border: none; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: 0.2s; background: #3498db; color: white; width: 100%; margin-top: 15px; }
+        .btn:hover { background: #2980b9; transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .result-screen { text-align: center; padding: 40px; display: none; }
+        .result-screen.show { display: block; }
+        .final-score { font-size: 4em; font-weight: bold; color: #3498db; margin: 20px 0; }
+        .grade-message { font-size: 1.8em; margin: 30px 0; padding: 20px; border-radius: 15px; background: #f1f2f6; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 500px) { .letter-input, .fixed-letter { width: 40px; height: 40px; font-size: 1.2em; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📘 管理学术语测试</h1>
+        <p>选择题 · 判断题 · 词库题 · 字母补全题</p>
+    </div>
+    <div class="stats">
+        <span class="score-box" id="scoreDisplay">得分: 0</span>
+        <span class="q-counter" id="questionCounter">1 / 16</span>
+    </div>
+    <div class="main" id="mainArea"></div>
+    <div id="resultScreen" class="result-screen">
+        <h2>测试完成！</h2>
+        <div class="final-score" id="finalScore">0</div>
+        <div class="grade-message" id="gradeMessage"></div>
+        <button class="btn" id="restartBtn">重新开始测试</button>
+    </div>
+</div>
+<script>
+(function() {
+    const questions = [
+        { type: 'MC', question: '哪个术语指的是协调资源以实现组织目标的过程？', options: ['管理', '组织资源', '效率', '效果'], answer: 0, points: 5, explanation: '管理涉及协调资源以实现目标。' },
+        { type: 'MC', question: '正确地做事，例如快速完成招聘，被称为什么？', options: ['效率', '效果', '科学性', '艺术性'], answer: 0, points: 5, explanation: '效率侧重于正确地做事（最小化浪费/时间）。' },
+        { type: 'MC', question: '哪个管理职能涉及设定目标和制定计划？', options: ['计划', '组织', '领导', '控制'], answer: 0, points: 5, explanation: '计划是设定目标并决定如何实现目标的职能。' },
+        { type: 'MC', question: '激励和指导人员是哪个职能的本质？', options: ['领导', '控制', '计划', '组织'], answer: 0, points: 5, explanation: '领导涉及指导和激励员工。' },
+        { type: 'MC', question: '"组织资源"包括什么？', options: ['人力资源等资产', '仅金融资产', '管理活动', '目标和目的'], answer: 0, points: 5, explanation: '组织资源包括所有资产，尤其是人力资源。' },
+        { type: 'TF', question: '效率意味着做正确的事以实现目标。', options: ['正确', '错误'], answer: 1, points: 5, explanation: '错误。效率是正确地做事；效果是做正确的事。' },
+        { type: 'TF', question: '管理既是一门科学也是一门艺术。', options: ['正确', '错误'], answer: 0, points: 5, explanation: '正确。它有科学原理，也需要艺术性的灵活性。' },
+        { type: 'TF', question: '控制职能涉及设定目标和制定计划。', options: ['正确', '错误'], answer: 1, points: 5, explanation: '错误。控制是监控绩效并纠正偏差。' },
+        { type: 'TF', question: '组织资源仅包括实物资产。', options: ['正确', '错误'], answer: 1, points: 5, explanation: '错误。它们包括人力、财务、实物和信息资源。' },
+        { type: 'TF', question: '创新是五大核心管理职能之一。', options: ['正确', '错误'], answer: 0, points: 5, explanation: '正确。五大职能是计划、组织、领导、控制和创新。' },
+        { type: 'TF', question: '计划职能是关于构建资源和角色。', options: ['正确', '错误'], answer: 1, points: 5, explanation: '错误。组织是关于构建资源和角色。' },
+        { type: 'WB', question: '人力资源部的年度培训计划是__________职能的一个例子。', options: ['计划', '组织', '领导', '控制'], answer: 0, points: 5, explanation: '计划涉及设定目标和制定计划。' },
+        { type: 'WB', question: '设计人力资源三支柱模型属于__________职能。', options: ['计划', '组织', '领导', '控制'], answer: 1, points: 5, explanation: '组织构建资源和角色。' },
+        { type: 'WB', question: '员工激励计划用于__________职能。', options: ['计划', '组织', '领导', '控制'], answer: 2, points: 5, explanation: '领导激励和指导人员。' },
+        { type: 'WB', question: '审查招聘质量是__________职能的一个例子。', options: ['计划', '组织', '领导', '控制'], answer: 3, points: 5, explanation: '控制监控绩效并纠正问题。' },
+        { type: 'LC', question: '补全单词：M _ n _ g _ m _ n t（管理）', answer: 'management', points: 10, pattern: ['M', '_', 'n', '_', 'g', '_', 'm', '_', 'n', 't'], missing: [1,3,5,7], explanation: '正确拼写是"management"。' },
+        { type: 'LC', question: '补全单词：_ f f _ c _ _ n c _（效率）', answer: 'efficiency', points: 10, pattern: ['_', 'f', 'f', '_', 'c', '_', '_', 'n', 'c', '_'], missing: [0,3,5,6,9], explanation: '正确拼写是"efficiency"。' }
+    ];
+    let currentIndex = 0, score = 0, answered = false, autoTimer = null;
+    const mainArea = document.getElementById('mainArea'), scoreDisplay = document.getElementById('scoreDisplay'), questionCounter = document.getElementById('questionCounter'), resultScreen = document.getElementById('resultScreen'), finalScore = document.getElementById('finalScore'), gradeMessage = document.getElementById('gradeMessage'), restartBtn = document.getElementById('restartBtn');
+    function updateScore() { scoreDisplay.textContent = `得分: ${score}`; }
+    function updateCounter() { questionCounter.textContent = `${currentIndex+1} / ${questions.length}`; }
+    function clearTimer() { if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; } }
+    function loadQuestion() {
+        clearTimer(); answered = false; const q = questions[currentIndex];
+        let html = `<div class="question-text">${q.question}</div>`;
+        if (q.type === 'MC' || q.type === 'TF' || q.type === 'WB') {
+            html += `<div class="options-area" id="optionsArea">`;
+            q.options.forEach((opt, idx) => { html += `<div class="option-btn" data-opt-index="${idx}">${opt}</div>`; });
+            html += `</div>`;
+        } else if (q.type === 'LC') {
+            html += `<div class="fill-box" id="fillBox">`;
+            q.pattern.forEach((ch, idx) => { if (ch === '_') html += `<input type="text" class="letter-input" maxlength="1" data-pos="${idx}">`; else html += `<span class="fixed-letter">${ch}</span>`; });
+            html += `</div>`;
+        }
+        html += `<div class="feedback" id="feedbackArea"><div class="feedback-title" id="feedbackTitle"></div><div class="feedback-text" id="feedbackText"></div></div><button class="btn" id="submitBtn">提交答案</button>`;
+        mainArea.innerHTML = html;
+        if (q.type === 'MC' || q.type === 'TF' || q.type === 'WB') {
+            const optBtns = document.querySelectorAll('.option-btn');
+            optBtns.forEach(btn => { btn.addEventListener('click', function() { if (answered) return; optBtns.forEach(b => b.classList.remove('selected')); this.classList.add('selected'); }); });
+        }
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            if (answered) return; const q = questions[currentIndex]; let userAnswer = null, isCorrect = false;
+            if (q.type === 'MC' || q.type === 'TF' || q.type === 'WB') {
+                const selected = document.querySelector('.option-btn.selected');
+                if (!selected) { alert('请选择一个选项。'); return; }
+                userAnswer = parseInt(selected.dataset.optIndex); isCorrect = (userAnswer === q.answer);
+            } else if (q.type === 'LC') {
+                const inputs = document.querySelectorAll('.letter-input'); let userWord = '';
+                inputs.forEach(input => userWord += input.value.toLowerCase()); isCorrect = (userWord === q.answer.toLowerCase());
+            }
+            answered = true; this.disabled = true;
+            const feedback = document.getElementById('feedbackArea'), feedbackTitle = document.getElementById('feedbackTitle'), feedbackText = document.getElementById('feedbackText');
+            feedback.classList.add('show');
+            if (isCorrect) { score += q.points; updateScore(); feedback.classList.add('correct-feedback'); feedback.classList.remove('wrong-feedback'); feedbackTitle.textContent = '✅ 回答正确！'; }
+            else { feedback.classList.add('wrong-feedback'); feedback.classList.remove('correct-feedback'); feedbackTitle.textContent = '❌ 回答错误'; }
+            feedbackText.textContent = q.explanation || (q.type==='LC'?`正确拼写：${q.answer}`:'');
+            if (q.type !== 'LC') {
+                const optBtns = document.querySelectorAll('.option-btn');
+                optBtns.forEach((btn, idx) => { btn.classList.remove('selected'); if (idx === q.answer) btn.classList.add('correct'); else if (idx === userAnswer && !isCorrect) btn.classList.add('wrong'); });
+            }
+            clearTimer(); autoTimer = setTimeout(() => { if (currentIndex < questions.length - 1) { currentIndex++; loadQuestion(); updateCounter(); } else showResult(); }, 2000);
+        });
+    }
+    function showResult() {
+        clearTimer(); mainArea.style.display = 'none'; resultScreen.classList.add('show');
+        finalScore.textContent = `${score} / 100`; const percentage = score; let grade = '';
+        if (percentage >= 90) grade = '🏆 优秀！您已掌握管理学术语！'; else if (percentage >= 75) grade = '👍 做得好，继续保持！'; else if (percentage >= 60) grade = '📚 及格，但需要更多复习。'; else grade = '💪 继续练习，再试一次！';
+        gradeMessage.textContent = grade;
+    }
+    restartBtn.addEventListener('click', function() { currentIndex = 0; score = 0; updateScore(); mainArea.style.display = 'block'; resultScreen.classList.remove('show'); loadQuestion(); updateCounter(); });
+    loadQuestion(); updateScore();
+})();
+</script>
+</body>
+</html>
